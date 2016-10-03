@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NestedSynchronizedMethodCalss", "NestedSynchronizedMethodCalss\NestedSynchronizedMethodCalss\NestedSynchronizedMethodCalss.csproj", "{4B1F8D30-A84E-4D6D-A348-5EE0920D38CF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NestedSynchronizedMethodCalss.Test", "NestedSynchronizedMethodCalss\NestedSynchronizedMethodCalss.Test\NestedSynchronizedMethodCalss.Test.csproj", "{E2F1E0B6-8B5A-46E2-ACB0-380A27BD4AD1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NestedSynchronizedMethodCalss.Vsix", "NestedSynchronizedMethodCalss\NestedSynchronizedMethodCalss.Vsix\NestedSynchronizedMethodCalss.Vsix.csproj", "{AEEFDAFB-D475-462B-89C8-AB7A25983245}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4B1F8D30-A84E-4D6D-A348-5EE0920D38CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B1F8D30-A84E-4D6D-A348-5EE0920D38CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B1F8D30-A84E-4D6D-A348-5EE0920D38CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B1F8D30-A84E-4D6D-A348-5EE0920D38CF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E2F1E0B6-8B5A-46E2-ACB0-380A27BD4AD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E2F1E0B6-8B5A-46E2-ACB0-380A27BD4AD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E2F1E0B6-8B5A-46E2-ACB0-380A27BD4AD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E2F1E0B6-8B5A-46E2-ACB0-380A27BD4AD1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AEEFDAFB-D475-462B-89C8-AB7A25983245}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AEEFDAFB-D475-462B-89C8-AB7A25983245}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AEEFDAFB-D475-462B-89C8-AB7A25983245}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AEEFDAFB-D475-462B-89C8-AB7A25983245}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal
