@@ -55,34 +55,46 @@ namespace NestedSynchronizedMethodCalss
             {
                 var lockObject = lockStatementSyntax.Expression;
                 var memberAccessExpression =
-                    lockStatementSyntax.DescendantNodes().OfType<MemberAccessExpressionSyntax>();
-                foreach (var memberAccessExpressionSyntax in memberAccessExpression)
+                    lockStatementSyntax.DescendantNodes().OfType<MemberAccessExpressionSyntax>().ToList();
+                
+                List<MemberAccessExpressionSyntax> methodsToCheck = FindMethodsToCheck(parametersOfOwnKind,
+                    memberAccessExpression);
+
+                foreach (var memberAccessExpressionSyntax in methodsToCheck)
                 {
-                    foreach (var parameter in parametersOfOwnKind)
+                    if (CheckIfAquiresSameLock(lockObject, memberAccessExpressionSyntax.Name, root))
                     {
-                        if (memberAccessExpressionSyntax.Expression.ToString() == parameter.ToString())
-                        {
-                            if (CheckIfAquiresSameLock(lockObject, memberAccessExpressionSyntax.Name, method))
-                            {
-                                var diagn = Diagnostic.Create(Rule, memberAccessExpressionSyntax.GetLocation());
-                                context.ReportDiagnostic(diagn);
-                            }
-                        }
+                        var diagn = Diagnostic.Create(Rule, memberAccessExpressionSyntax.GetLocation());
+                        context.ReportDiagnostic(diagn);
                     }
                 }
             }
-
-
-
+            
         }
 
-        private static bool CheckIfAquiresSameLock(ExpressionSyntax lockObject, SimpleNameSyntax name, MethodDeclarationSyntax method)
+        private static List<MemberAccessExpressionSyntax> FindMethodsToCheck(List<SyntaxToken> parametersOfOwnKind, List<MemberAccessExpressionSyntax> memberAccessExpression)
         {
-            var clazz = method.AncestorsAndSelf().OfType<ClassDeclarationSyntax>().FirstOrDefault();
+            var methodList = new List<MemberAccessExpressionSyntax>();
+            foreach (var parameter in parametersOfOwnKind)
+            {
+                foreach (var memberAccessExpressionSyntax in memberAccessExpression)
+                {
+                    if (memberAccessExpressionSyntax.Expression.ToString() == parameter.ToString())
+                    {
+                        methodList.Add(memberAccessExpressionSyntax);
+                    }
+                }
+            }
+            return methodList;
+        }
+
+        private static bool CheckIfAquiresSameLock(ExpressionSyntax lockObject, SimpleNameSyntax methodName, SyntaxNode root)
+        {
+            var clazz = root.AncestorsAndSelf().OfType<ClassDeclarationSyntax>().FirstOrDefault();
             var calledMethod =
                 clazz
                     .DescendantNodes()
-                    .OfType<MethodDeclarationSyntax>().FirstOrDefault(e => e.Identifier.Text == name.ToString());
+                    .OfType<MethodDeclarationSyntax>().FirstOrDefault(e => e.Identifier.Text == methodName.ToString());
             var lockStatements = GetLockStatements(calledMethod);
             foreach (var lockStatementSyntax in lockStatements)
             {
