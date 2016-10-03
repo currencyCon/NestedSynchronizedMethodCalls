@@ -22,7 +22,7 @@ namespace NestedSynchronizedMethodCalss
 
         public sealed override ImmutableArray<string> FixableDiagnosticIds
         {
-            get { return ImmutableArray.Create(NestedSynchronizedMethodCalssAnalyzer.DiagnosticId); }
+            get { return ImmutableArray.Create(NestedSynchronizedMethodCalssAnalyzer.NestedLockingDiagnosticId); }
         }
 
         public sealed override FixAllProvider GetFixAllProvider()

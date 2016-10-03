@@ -12,62 +12,42 @@ namespace NestedSynchronizedMethodCalss.Test
     public class UnitTest : CodeFixVerifier
     {
 
-        //No diagnostics expected to show up
-        [TestMethod]
-        public void TestMethod1()
-        {
-            var test = @"";
 
-            VerifyCSharpDiagnostic(test);
-        }
 
-        //Diagnostic and CodeFix both triggered and checked for
         [TestMethod]
-        public void TestMethod2()
+        public void AnalyzerFindsSimpleCase()
         {
             var test = @"
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
-
-    namespace ConsoleApplication1
+    class BankAccount
     {
-        class TypeName
-        {   
+        private int balance;
+        public void Deposit(int amount)
+        {
+            lock (this) { balance += amount; }
+        }
+        public void Transfer(BankAccount target, int amount)
+        {
+            lock (this)
+            {
+                balance -= amount;
+                target.Deposit(amount); // lock (target)
+            }
         }
     }";
             var expected = new DiagnosticResult
             {
-                Id = "NestedSynchronizedMethodCalss",
-                Message = String.Format("Type name '{0}' contains lowercase letters", "TypeName"),
+                Id = NestedSynchronizedMethodCalssAnalyzer.NestedLockingDiagnosticId,
+                Message = "Possible Deadlock with double Locking",
                 Severity = DiagnosticSeverity.Warning,
                 Locations =
                     new[] {
-                            new DiagnosticResultLocation("Test0.cs", 11, 15)
+                            new DiagnosticResultLocation("Test0.cs", 14, 17)
                         }
             };
 
             VerifyCSharpDiagnostic(test, expected);
 
-            var fixtest = @"
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
-
-    namespace ConsoleApplication1
-    {
-        class TYPENAME
-        {   
-        }
-    }";
-            VerifyCSharpFix(test, fixtest);
-        }
+  }
 
         protected override CodeFixProvider GetCSharpCodeFixProvider()
         {
