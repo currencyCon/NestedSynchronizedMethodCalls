@@ -13,8 +13,6 @@ namespace NestedSynchronizedMethodCalss
     {
         public static string NestedLockingDiagnosticId = "NSMC001";
 
-        // You can change these strings in the Resources.resx file. If you do not want your analyzer to be localize-able, you can use regular strings for Title and MessageFormat.
-        // See https://github.com/dotnet/roslyn/blob/master/docs/analyzers/Localizing%20Analyzers.md for more on localization
         private static readonly LocalizableString Title = new LocalizableResourceString(nameof(Resources.AnalyzerTitle), Resources.ResourceManager, typeof(Resources));
         private static readonly LocalizableString MessageFormat = new LocalizableResourceString(nameof(Resources.AnalyzerMessageFormat), Resources.ResourceManager, typeof(Resources));
         private static readonly LocalizableString Description = new LocalizableResourceString(nameof(Resources.AnalyzerDescription), Resources.ResourceManager, typeof(Resources));
@@ -26,10 +24,7 @@ namespace NestedSynchronizedMethodCalss
 
         public override void Initialize(AnalysisContext context)
         {
-            // TODO: Consider registering other actions that act on syntax instead of or in addition to symbols
-            // See https://github.com/dotnet/roslyn/blob/master/docs/analyzers/Analyzer%20Actions%20Semantics.md for more information
             context.RegisterSyntaxNodeAction(AnalyzeMethodDeclaration, SyntaxKind.MethodDeclaration);
-            //context.RegisterSyntaxNodeAction(, SyntaxKind.PropertyDeclaration);
         }
 
         private static void AnalyzeMethodDeclaration(SyntaxNodeAnalysisContext context)
@@ -46,7 +41,7 @@ namespace NestedSynchronizedMethodCalss
                 return;
             }
 
-            var parametersOfOwnKind = ParametersOfOwnType(method);
+            var parametersOfOwnKind = ParametersOfOwnType(method, context);
             if (!parametersOfOwnKind.Any())
             {
                 return;
@@ -111,22 +106,29 @@ namespace NestedSynchronizedMethodCalss
             return node.DescendantNodesAndSelf().OfType<LockStatementSyntax>();
         }
 
-        private static List<SyntaxToken> ParametersOfOwnType(BaseMethodDeclarationSyntax node)
+        private static List<SyntaxToken> ParametersOfOwnType(BaseMethodDeclarationSyntax node, SyntaxNodeAnalysisContext context)
         {
-            var classDecl = GetTypeOfClass(node);
-            if (classDecl == null)
-            {
-                return null;
-            }
+            var clazz = GetClass(node);
+            var classTypeSymbol = context.SemanticModel.GetDeclaredSymbol(clazz);
             var parametersOfOwnType = new List<SyntaxToken>();
+            HierarchieChecker hierarchieChecker = new HierarchieChecker(classTypeSymbol);
+            
             foreach (var parameterSyntax in node.ParameterList.Parameters)
             {
-                if (parameterSyntax.Type.ToString() == classDecl)
+                var baseTypeSymbol = context.SemanticModel.GetDeclaredSymbol(parameterSyntax).Type;
+                if (hierarchieChecker.IsSubClass(baseTypeSymbol))
                 {
                     parametersOfOwnType.Add(parameterSyntax.Identifier);
                 }
             }
             return parametersOfOwnType;
+        }
+
+        private static ClassDeclarationSyntax GetClass(SyntaxNode method)
+        {
+            var classDeclarations = method.AncestorsAndSelf().OfType<ClassDeclarationSyntax>();
+            var classDeclaration = classDeclarations.FirstOrDefault();
+            return classDeclaration;
         }
 
         private static string GetTypeOfClass(SyntaxNode method)

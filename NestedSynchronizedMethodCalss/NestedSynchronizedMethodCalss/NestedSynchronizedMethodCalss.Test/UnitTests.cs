@@ -193,6 +193,48 @@ namespace NestedSynchronizedMethodCalss.Test
         }
 
 
+        [TestMethod]
+        public void AnalyzerFindsInterface()
+        {
+            var test = @"
+    internal interface IBankAccount
+    {
+        void Transfer(IBankAccount target, int amount);
+        void Deposit(int amount);
+    }
+
+    class BankAccount : IBankAccount
+    {
+        private int balance;
+        public void Deposit(int amount)
+        {
+            lock (this) { balance += amount; }
+        }
+        public void Transfer(IBankAccount target, int amount)
+        {
+            lock (this)
+            {
+                balance -= amount;
+                target.Deposit(amount); // lock (target)
+            }
+        }
+    }";
+            var expected = new DiagnosticResult
+            {
+                Id = NestedSynchronizedMethodCalssAnalyzer.NestedLockingDiagnosticId,
+                Message = "Possible Deadlock with double Locking",
+                Severity = DiagnosticSeverity.Warning,
+                Locations =
+                    new[] {
+                            new DiagnosticResultLocation("Test0.cs", 20, 17)
+                        }
+            };
+
+            VerifyCSharpDiagnostic(test, expected);
+
+        }
+
+
         protected override CodeFixProvider GetCSharpCodeFixProvider()
         {
             return new NestedSynchronizedMethodCalssCodeFixProvider();

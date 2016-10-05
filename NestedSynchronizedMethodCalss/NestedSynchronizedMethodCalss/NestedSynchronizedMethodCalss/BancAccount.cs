@@ -6,20 +6,37 @@ using System.Threading.Tasks;
 
 namespace NestedSynchronizedMethodCalss
 {
-    class BankAccount
+    class BankAccount : IBankAccount
     {
-        private int balance;
+        private int _balance;
+
+        public int Balance
+        {
+            get
+            {
+                return _balance;
+            }
+            set { _balance = value; }
+        }
+
         public void Deposit(int amount)
         {
-            lock (this) { balance += amount; }
+            lock (this) { Balance += amount; }
         }
-        public void Transfer(BankAccount target, int amount)
+        public void Transfer(IBankAccount target, int amount)
         {
             lock (this)
             {
-                balance -= amount;
+                Balance -= amount;
                 target.Deposit(amount); // lock (target)
             }
         }
     }
+
+    internal interface IBankAccount
+    {
+        void Transfer(IBankAccount target, int amount);
+        void Deposit(int amount);
+    }
+    
 }
