@@ -5,6 +5,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using Microsoft.CodeAnalysis.FindSymbols;
+using Microsoft.CodeAnalysis.MSBuild;
 
 namespace NestedSynchronizedMethodCalss
 {
@@ -35,6 +37,44 @@ namespace NestedSynchronizedMethodCalss
                 return;
             }
             var method = (MethodDeclarationSyntax) root;
+            CheckForLockingOnSameType(context, method);
+
+            CheckForCyclicLocks(context, method);
+
+        }
+        private static async void CheckForCyclicLocks(SyntaxNodeAnalysisContext context, MethodDeclarationSyntax method)
+        {
+            var lockStatements = GetLockStatements(method).ToList();
+            if (!lockStatements.Any())
+            {
+                return;
+            }
+
+            var methodCalls = MethodsInvokedInLockStatements(lockStatements).ToList();
+            foreach (var methodCall in methodCalls)
+            {
+                var methodName = ((MemberAccessExpressionSyntax)methodCall.Expression).Name.ToFullString();
+                var l = (MemberAccessExpressionSyntax)methodCall.Expression;
+                var type = l.Expression as IdentifierNameSyntax;
+                var info = context.SemanticModel.GetSymbolInfo(type).Symbol as IPropertySymbol;
+                var c = info.Type.GetMembers();
+                var meth = c.First(e => e.Name == methodName) as IMethodSymbol;
+                var sol = MSBuildWorkspace.Create().CurrentSolution;
+                var lop = await SymbolFinder.FindImplementationsAsync(meth, MSBuildWorkspace.Create().CurrentSolution);
+                var impls = info.Type;
+                var u = 2;
+            }
+            var x = 2;
+
+        }
+
+        private static IEnumerable<InvocationExpressionSyntax> MethodsInvokedInLockStatements(IEnumerable<LockStatementSyntax> lockStatements)
+        {
+            return lockStatements.SelectMany(e => e.DescendantNodes().OfType<InvocationExpressionSyntax>());
+        }
+
+        private static void CheckForLockingOnSameType(SyntaxNodeAnalysisContext context, MethodDeclarationSyntax method)
+        {
             var lockStatements = GetLockStatements(method).ToList();
             if (!lockStatements.Any())
             {
@@ -50,21 +90,22 @@ namespace NestedSynchronizedMethodCalss
             {
                 var lockObject = lockStatementSyntax.Expression;
                 var memberAccessExpression =
-                    lockStatementSyntax.DescendantNodes().OfType<MemberAccessExpressionSyntax>().ToList();
-                
-                List<MemberAccessExpressionSyntax> methodsToCheck = FindMethodsToCheck(parametersOfOwnKind,
-                    memberAccessExpression);
-
-                foreach (var memberAccessExpressionSyntax in methodsToCheck)
+                    lockStatementSyntax.DescendantNodes().OfType<MemberAccessExpressionSyntax>();
+                foreach (var memberAccessExpressionSyntax in memberAccessExpression)
                 {
-                    if (CheckIfAquiresSameLock(lockObject, memberAccessExpressionSyntax.Name, root))
+                    foreach (var parameter in parametersOfOwnKind)
                     {
-                        var diagn = Diagnostic.Create(Rule, memberAccessExpressionSyntax.GetLocation());
-                        context.ReportDiagnostic(diagn);
+                        if (memberAccessExpressionSyntax.Expression.ToString() == parameter.ToString())
+                        {
+                            if (CheckIfAquiresSameLock(lockObject, memberAccessExpressionSyntax.Name, method))
+                            {
+                                var diagn = Diagnostic.Create(Rule, memberAccessExpressionSyntax.GetLocation());
+                                context.ReportDiagnostic(diagn);
+                            }
+                        }
                     }
                 }
             }
-            
         }
 
         private static List<MemberAccessExpressionSyntax> FindMethodsToCheck(List<SyntaxToken> parametersOfOwnKind, List<MemberAccessExpressionSyntax> memberAccessExpression)
